@@ -1,0 +1,45 @@
+# Wiki.js 2.x on Render: one web service running the official Docker image,
+# backed by Render Postgres. Pages and uploads are stored in Postgres, so the
+# service needs no persistent disk.
+services:
+  - type: web
+    name: wikijs
+    runtime: image
+    image:
+      url: ghcr.io/requarks/wiki:2
+    plan: standard # Wiki.js needs ~1 GB RAM; starter (512 MB) is too tight
+    region: oregon
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: DB_TYPE
+        value: postgres
+      - key: DB_HOST
+        fromDatabase:
+          name: wikijs-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: wikijs-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: wikijs-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: wikijs-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: wikijs-db
+          property: database
+
+databases:
+  - name: wikijs-db
+    plan: basic-256mb
+    region: oregon
+    postgresMajorVersion: "16"
+    diskSizeGB: 5
+    ipAllowList: [] # internal connections only
